@@ -1,0 +1,6 @@
+{
+  "name": "git-review",
+  "version": "1.0.0",
+  "description": "Read-only local code review against main",
+  "agents": "agents/"
+}

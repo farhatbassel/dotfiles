@@ -1,0 +1,54 @@
+[tools]
+node = "26.13.0"
+go = "1.27.4"
+python = "3.15.2"
+"npm:@angular/language-server" = "22.2.5"
+"npm:@olrtg/emmet-language-server" = "2.8.0"
+"npm:graphql-language-service-cli" = "4.0.1"
+"npm:typescript" = "7.0.2"
+"npm:typescript-language-server" = "6.0.3"
+"npm:vscode-langservers-extracted" = "4.10.0"
+"go:golang.org/x/tools/gopls" = "0.24.0"
+"go:github.com/go-delve/delve/cmd/dlv" = "1.27.2"
+"dotnet:Azure.Bicep.LangServer" = "0.49.2"
+"dotnet:roslyn-language-server" = { version = "5.13.0-1.26514.10", prerelease = "true" }
+"aqua:LuaLS/lua-language-server" = "3.19.2"
+"aqua:JohnnyMorganz/StyLua" = "2.6.0"
+"aqua:neovim/neovim" = "0.12.6"
+tmux = "3.8"
+lazygit = "0.66.3"
+"pypi:azure-cli" = "2.89.1"
+"aqua:sharkdp/fd" = "10.5.2"
+"aqua:junegunn/fzf" = "0.75.0"
+"aqua:BurntSushi/ripgrep" = "15.2.0"
+"aqua:chmln/sd" = "1.1.0"
+"aqua:joshmedeski/sesh" = "2.34.0"
+"github:microsoft/go-sqlcmd" = "1.10.0"
+"aqua:tree-sitter/tree-sitter" = "0.27.2"
+"aqua:ajeetdsouza/zoxide" = "0.10.0"
+"aqua:github/copilot-cli" = "1.0.109"
+"aqua:astral-sh/uv" = "0.13.7"
+"npm:npm-check-updates" = "23.1.1"
+"npm:@fsouza/prettierd" = "0.29.0"
+pnpm = "12.18.0"
+atuin = "latest"
+
+[tasks."setup:zsh"]
+description = "Install Oh My Zsh, shell suggestions, syntax highlighting, and the prompt"
+run = "sh {{ mise_config_dir | dirname | quote }}/zsh/setup.sh"
+
+[tasks.setup-copilot]
+description = "Restore global tools"
+dir = "{{ mise_config_dir }}"
+run = [
+  "pnpm --dir {{ mise_config_dir | dirname | quote }}/copilot install --frozen-lockfile --ignore-scripts",
+  "pnpm --dir {{ mise_config_dir | dirname | quote }}/copilot build",
+  "pnpm --dir {{ mise_config_dir | dirname | quote }}/copilot test --run",
+]
+
+[tasks.review]
+description = "Review the current Git repository against main without write access"
+alias = "code-review"
+tools = { node= "26" }
+dir = "{{ cwd }}"
+run = "node {{ mise_config_dir | dirname | quote }}/copilot/dist/server/review.js"

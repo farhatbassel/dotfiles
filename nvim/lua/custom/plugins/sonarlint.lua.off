@@ -1,0 +1,132 @@
+return {
+  {
+    'obarbier/sonarlint.nvim',
+    dependencies = {
+      'mfussenegger/nvim-jdtls',
+    },
+    init = function()
+      if vim.lsp.get_clients then
+        vim.lsp.get_active_clients = vim.lsp.get_clients
+      end
+    end,
+    config = function()
+      local java = 'java'
+      local local_java_home = vim.fn.expand '~/.local/share/jdks/temurin-21/Contents/Home'
+      if vim.fn.executable(local_java_home .. '/bin/java') == 1 then
+        java = local_java_home .. '/bin/java'
+        vim.env.JAVA_HOME = local_java_home
+        vim.env.PATH = local_java_home .. '/bin:' .. vim.env.PATH
+      elseif vim.fn.executable 'java' == 0 then
+        vim.notify('SonarLint requires Java in PATH. Install a JRE/JDK to enable SonarQube analysis.', vim.log.levels.ERROR)
+        return
+      end
+
+      vim.fn.system { java, '-version' }
+      if vim.v.shell_error ~= 0 then
+        vim.notify('SonarLint requires a working Java runtime. Install a JRE/JDK to enable SonarQube analysis.', vim.log.levels.ERROR)
+        return
+      end
+
+      local sonarlint_home = vim.fn.expand '~/.local/share/sonarlint.nvim/vscode-3.22.0'
+      local sonarlint_jar = sonarlint_home .. '/server/sonarlint-ls.jar'
+      if not vim.uv.fs_stat(sonarlint_jar) and vim.fn.executable 'sonarlint-language-server' == 0 then
+        vim.notify('sonarlint-language-server is missing. Run :MasonToolsInstallSync or :MasonInstall sonarlint-language-server.', vim.log.levels.ERROR)
+        return
+      end
+
+      local analyzers_path = vim.uv.fs_stat(sonarlint_jar) and (sonarlint_home .. '/analyzers/') or vim.fn.expand '$MASON/share/sonarlint-analyzers/'
+      local analyzer_candidates = {
+        'sonarjs.jar',
+        'sonarjava.jar',
+        'sonarpython.jar',
+        'sonargo.jar',
+        'sonarxml.jar',
+      }
+      local filetypes = { 'javascript', 'typescript', 'javascriptreact', 'typescriptreact', 'java', 'python', 'go' }
+      local supported_filetypes = {}
+      local analyzers = {}
+      local connected_mode = nil
+      local cwd = vim.uv.cwd()
+      local sonarqube_url = vim.env.SONARQUBE_URL or vim.env.SONAR_HOST_URL
+      local sonarqube_token = vim.env.SONARQUBE_TOKEN or vim.env.SONAR_TOKEN
+      local sonarqube_project = vim.env.SONARQUBE_PROJECT_KEY or vim.env.SONAR_PROJECT_KEY
+
+      local vscode_settings_path = cwd and (cwd .. '/.vscode/settings.json') or nil
+      if not sonarqube_project and vscode_settings_path and vim.uv.fs_stat(vscode_settings_path) then
+        local settings_lines = vim.fn.readfile(vscode_settings_path)
+        local ok, settings = pcall(vim.json.decode, table.concat(settings_lines, '\n'))
+        if ok and settings and settings['sonarlint.connectedMode.project'] then
+          sonarqube_project = settings['sonarlint.connectedMode.project'].projectKey
+        end
+      end
+
+      local sonar_properties_path = cwd and (cwd .. '/sonar-project.properties') or nil
+      if not sonarqube_project and sonar_properties_path and vim.uv.fs_stat(sonar_properties_path) then
+        for _, line in ipairs(vim.fn.readfile(sonar_properties_path)) do
+          local key, value = line:match '^%s*([^#][^=]+)%s*=%s*(.-)%s*$'
+          if key == 'sonar.projectKey' and value and value ~= '' then
+            sonarqube_project = value
+            break
+          end
+        end
+      end
+
+      for _, analyzer in ipairs(analyzer_candidates) do
+        local analyzer_path = analyzers_path .. analyzer
+        if vim.uv.fs_stat(analyzer_path) then
+          table.insert(analyzers, analyzer_path)
+        end
+      end
+      for _, filetype in ipairs(filetypes) do
+        supported_filetypes[filetype] = true
+      end
+
+      if sonarqube_url and sonarqube_token and sonarqube_project then
+        connected_mode = {
+          project = {
+            projectKey = sonarqube_project,
+          },
+          connections = {
+            sonarqube = {
+              {
+                connectionId = 'default-sonarqube',
+                serverUrl = sonarqube_url,
+                token = sonarqube_token,
+              },
+            },
+          },
+        }
+      end
+
+      local cmd = vim.uv.fs_stat(sonarlint_jar) and { java, '-jar', sonarlint_jar, '-stdio' } or { 'sonarlint-language-server', '-stdio' }
+      if #analyzers > 0 then
+        vim.list_extend(cmd, { '-analyzers' })
+        vim.list_extend(cmd, analyzers)
+      end
+
+      require('sonarlint').setup {
+        server = {
+          cmd = cmd,
+          settings = {
+            sonarlint = {
+              connectedMode = connected_mode,
+              rules = {
+                ['python:S3403'] = { level = 'on' },
+                ['python:S3923'] = { level = 'on' },
+                ['typescript:S3923'] = { level = 'on' },
+                ['typescript:S2068'] = { level = 'on' },
+              },
+            },
+          },
+        },
+        filetypes = filetypes,
+      }
+
+      vim.schedule(function()
+        if supported_filetypes[vim.bo.filetype] then
+          vim.api.nvim_exec_autocmds('FileType', { pattern = vim.bo.filetype, modeline = false })
+        end
+      end)
+    end,
+  },
+}
