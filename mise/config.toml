@@ -1,8 +1,8 @@
 [tools]
-node = "26.13.0"
+node = "26.13.1"
 go = "1.27.4"
 python = "3.15.2"
-"npm:@angular/language-server" = "22.2.5"
+"npm:@angular/language-server" = "22.2.6"
 "npm:@olrtg/emmet-language-server" = "2.8.0"
 "npm:graphql-language-service-cli" = "4.0.1"
 "npm:typescript" = "7.0.2"

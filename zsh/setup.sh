@@ -32,6 +32,8 @@ install_repo ohmyzsh/ohmyzsh "$ZSH" oh-my-zsh.sh
 mkdir -p "$ZSH_CUSTOM/plugins" "$ZSH_CUSTOM/themes"
 install_repo zsh-users/zsh-autosuggestions \
   "$ZSH_CUSTOM/plugins/zsh-autosuggestions" zsh-autosuggestions.plugin.zsh
+install_repo jeffreytse/zsh-vi-mode \
+  "$ZSH_CUSTOM/plugins/zsh-vi-mode" zsh-vi-mode.zsh
 install_repo zsh-users/zsh-syntax-highlighting \
   "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" zsh-syntax-highlighting.plugin.zsh
 install_repo romkatv/powerlevel10k \

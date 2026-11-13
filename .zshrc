@@ -24,6 +24,7 @@ plugins=(
   zsh-autosuggestions
   zsh-interactive-cd
   zsh-syntax-highlighting
+  zsh-vi-mode
 )
 
 source $ZSH/oh-my-zsh.sh
