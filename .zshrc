@@ -41,7 +41,7 @@ alias lg="lazygit"
 alias vwapi="vw-openapi.sh"
 alias cd="z"
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+# To customize the prompt, run `p10k configure` or edit zsh/p10k.zsh in this repository.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 eval "$(atuin init zsh)"

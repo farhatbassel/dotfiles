@@ -3,15 +3,21 @@ set -eu
 
 config_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 zshrc="$HOME/.zshrc"
+p10k="$HOME/.p10k.zsh"
 export ZSH="${ZSH:-$HOME/.oh-my-zsh}"
 export ZSH_CUSTOM="${XDG_DATA_HOME:-$HOME/.local/share}/dotfiles/zsh"
 
-if [ -e "$zshrc" ] || [ -L "$zshrc" ]; then
-  if [ ! "$zshrc" -ef "$config_dir/.zshrc" ]; then
-    printf 'Refusing to overwrite %s. Back it up and remove it, then rerun setup.\n' "$zshrc" >&2
-    exit 1
+check_link() {
+  if [ -e "$1" ] || [ -L "$1" ]; then
+    if [ ! "$1" -ef "$2" ]; then
+      printf 'Refusing to overwrite %s. Back it up and remove it, then rerun setup.\n' "$1" >&2
+      exit 1
+    fi
   fi
-fi
+}
+
+check_link "$zshrc" "$config_dir/.zshrc"
+check_link "$p10k" "$config_dir/zsh/p10k.zsh"
 
 install_repo() {
   repository=$1
@@ -41,4 +47,8 @@ install_repo romkatv/powerlevel10k \
 
 if [ ! -e "$zshrc" ] && [ ! -L "$zshrc" ]; then
   ln -s "$config_dir/.zshrc" "$zshrc"
+fi
+
+if [ ! -e "$p10k" ] && [ ! -L "$p10k" ]; then
+  ln -s "$config_dir/zsh/p10k.zsh" "$p10k"
 fi
